@@ -1,0 +1,4 @@
+///[SinErrores]
+class Tree<E> {
+
+}
