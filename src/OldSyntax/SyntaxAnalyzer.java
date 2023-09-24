@@ -1,4 +1,4 @@
-package Syntax;
+package OldSyntax;
 
 import Lexical.LexicalAnalyzer;
 import Lexical.LexicalException;
