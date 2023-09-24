@@ -5,10 +5,10 @@ import java.util.HashMap;
 public class ConcreteMethod {
     boolean isStatic;
     String name;
-    String type;
+    Type type;
     HashMap<String, ConcreteAttribute> parameters;
 
-    public ConcreteMethod(String name, String type, boolean isStatic) {
+    public ConcreteMethod(String name, Type type, boolean isStatic) {
         this.name = name;
         this.type = type;
         this.isStatic = isStatic;
@@ -19,7 +19,7 @@ public class ConcreteMethod {
         return name;
     }
 
-    public String getType() {
+    public Type getType() {
         return type;
     }
 

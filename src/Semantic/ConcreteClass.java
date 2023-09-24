@@ -58,7 +58,7 @@ public class ConcreteClass {
         for (ConcreteAttribute a : attributes.values())
             if (!a.isWellDeclared())
                 return false;
-        return !name.equals("");
+        return !name.isEmpty();
     }
 
 }

@@ -25,6 +25,6 @@ public class ConcreteAttribute {
     }
 
     public boolean isWellDeclared() {
-        return !name.equals("") && !type.equals("");
+        return !name.isEmpty() && !type.isEmpty();
     }
 }
