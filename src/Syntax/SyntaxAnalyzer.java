@@ -3,6 +3,8 @@ package Syntax;
 import Lexical.LexicalAnalyzer;
 import Lexical.LexicalException;
 import Lexical.Token;
+import Semantic.ConcreteClass;
+import Semantic.SymbolTable;
 
 import java.io.IOException;
 
@@ -10,6 +12,9 @@ public class SyntaxAnalyzer {
     private LexicalAnalyzer lexicalAnalyzer;
     private Token tokenActual;
     private boolean verbose = true;
+
+    private SymbolTable symbolTable = new SymbolTable();
+
     public SyntaxAnalyzer(LexicalAnalyzer lexicalAnalyzer) {
         this.lexicalAnalyzer = lexicalAnalyzer;
     }
@@ -60,12 +65,15 @@ public class SyntaxAnalyzer {
     private void claseConcreta() throws LexicalException, SyntaxException, IOException {
         print("Entre en claseConcreta");
         match("keyword_class");
+        Token idClass = tokenActual;
         match("idClass");
         genericoConID();
+        symbolTable.currentClass = new ConcreteClass(idClass.getLexeme());
         herenciaOpcional();
         match("punctuator_{");
         listaMiembros();
         match("punctuator_}");
+        symbolTable.addClass(symbolTable.currentClass);
     }
 
     private void interfaceConcreta() throws LexicalException, SyntaxException, IOException {
@@ -94,8 +102,10 @@ public class SyntaxAnalyzer {
         print("Entre en heredaDe");
         if (tokenActual.getName().equals("keyword_extends")){
             match("keyword_extends");
+            Token idClass = tokenActual;
             match("idClass");
             genericoOpcional();
+            symbolTable.currentClass.setExtendsName(idClass.getLexeme());
         } else {
             print("Error en heredaDe");
             throw new SyntaxException(lexicalAnalyzer.getLine(), "extends", tokenActual.getLexeme());
@@ -106,8 +116,10 @@ public class SyntaxAnalyzer {
         print("Entre en implementaA");
         if (tokenActual.getName().equals("keyword_implements")){
             match("keyword_implements");
+            Token idClass = tokenActual;
             match("idClass");
             genericoOpcional();
+            symbolTable.currentClass.setImplementsName(idClass.getLexeme());
         } else {
             print("Error en implementaA");
             throw new SyntaxException(lexicalAnalyzer.getLine(), "implements", tokenActual.getLexeme());

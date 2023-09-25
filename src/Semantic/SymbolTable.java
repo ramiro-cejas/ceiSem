@@ -1,12 +1,12 @@
 package Semantic;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class SymbolTable {
-
-    HashMap<String, ConcreteClass> classes;
-    ConcreteMethod currentMethod;
-    ConcreteClass currentClass;
+    public HashMap<String, ConcreteClass> classes;
+    public ConcreteMethod currentMethod;
+    public ConcreteClass currentClass;
 
     /* # is the empty class Object */
     public SymbolTable() {
@@ -17,11 +17,18 @@ public class SymbolTable {
     }
 
     public void addClass(ConcreteClass c) {
-        if (!classes.containsKey(c.name))
+        if (!classes.containsKey(c.name)){
             classes.put(c.name, c);
+        }
         else
             System.out.println("Class " + c.name + " already defined");
     }
 
-
+    public boolean isWellDeclared(){
+        boolean wellDeclared = true;
+        for (ConcreteClass c : classes.values()){
+            wellDeclared = wellDeclared && c.isWellDeclared();
+        }
+        return wellDeclared;
+    }
 }

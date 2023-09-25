@@ -7,20 +7,8 @@ public class TypeClass implements Type{
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof TypeClass)
-            return ((TypeClass) obj).name.equals(this.name);
-        return false;
-    }
-
-    @Override
     public String toString() {
         return name;
-    }
-
-    @Override
-    public boolean equals(Type other) {
-        return false;
     }
 
     @Override

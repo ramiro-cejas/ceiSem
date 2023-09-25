@@ -8,13 +8,6 @@ public class TypePrimitive implements Type{
     }
 
     @Override
-    public boolean equals(Type other) {
-        if (other instanceof TypePrimitive)
-            return name.equals(((TypePrimitive) other).name);
-        return false;
-    }
-
-    @Override
     public boolean isSubtype(Type other) {
         if (other instanceof TypePrimitive)
             return name.equals(((TypePrimitive) other).name);
