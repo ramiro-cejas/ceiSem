@@ -1,30 +1,32 @@
 package Semantic;
 
+import Lexical.Token;
+
 public class ConcreteAttribute {
 
-    boolean isStatic;
-    String name;
-    String type;
+    Token isStatic;
+    Token name;
+    Token type;
 
-    public ConcreteAttribute(String name, String type, boolean isStatic) {
+    public ConcreteAttribute(Token name, Token type, Token isStatic) {
         this.name = name;
         this.type = type;
         this.isStatic = isStatic;
     }
 
-    public String getName() {
+    public Token getName() {
         return name;
     }
 
-    public String getType() {
+    public Token getType() {
         return type;
     }
 
-    public boolean isStatic() {
+    public Token isStatic() {
         return isStatic;
     }
 
     public boolean isWellDeclared() {
-        return !name.isEmpty() && !type.isEmpty();
+        return !name.getLexeme().isEmpty() && !type.getLexeme().isEmpty();
     }
 }

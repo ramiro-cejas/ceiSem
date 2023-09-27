@@ -1,33 +1,55 @@
 package Semantic;
 
+import Lexical.Token;
+
 import java.util.HashMap;
 
 public class ConcreteMethod {
-    boolean isStatic;
-    String name;
-    Type type;
+
+    Token name;
+    Token isStatic;
+    Token type;
     HashMap<String, ConcreteAttribute> parameters;
 
-    public ConcreteMethod(String name, Type type, boolean isStatic) {
-        this.name = name;
-        this.type = type;
-        this.isStatic = isStatic;
+    public ConcreteMethod() {
+        name = new Token("", "", -1);
+        type = new Token("", "", -1);
+        isStatic = new Token("", "", -1);
         parameters = new HashMap<>();
     }
 
-    public String getName() {
+    public void addParameter(ConcreteAttribute p) {
+        if (!parameters.containsKey(p.name.getLexeme()))
+            parameters.put(p.name.getLexeme(), p);
+        else
+            System.out.println("Parameter " + p.name.getLexeme() + " already defined"); //TODO: throw exception
+    }
+
+    public void setName(Token name) {
+        this.name = name;
+    }
+
+    public void setType(Token type) {
+        this.type = type;
+    }
+
+    public void setIsStatic(Token isStatic) {
+        this.isStatic = isStatic;
+    }
+
+    public Token getName() {
         return name;
     }
 
-    public Type getType() {
+    public Token getType() {
         return type;
     }
 
-    public boolean isStatic() {
+    public Token isStatic() {
         return isStatic;
     }
 
     public boolean isWellDeclared() {
-        return !name.equals("") && !type.equals("");
+        return !name.getLexeme().equals("") && !type.getLexeme().equals("");
     }
 }
