@@ -11,7 +11,7 @@ import java.io.IOException;
 public class SyntaxAnalyzer {
     private LexicalAnalyzer lexicalAnalyzer;
     private Token tokenActual;
-    private boolean verbose = true;
+    private boolean verbose = false;
     private SymbolTable symbolTable = new SymbolTable();
 
     public SyntaxAnalyzer(LexicalAnalyzer lexicalAnalyzer) {
@@ -755,5 +755,9 @@ public class SyntaxAnalyzer {
 
     public void disableVerbose() {
         this.verbose = false;
+    }
+
+    public String getST() {
+        return symbolTable.toString();
     }
 }

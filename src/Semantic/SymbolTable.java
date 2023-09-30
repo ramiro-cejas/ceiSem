@@ -36,6 +36,7 @@ public class SymbolTable {
     public void addClass(ConcreteClass c) {
         if (!classes.containsKey(c.name.getLexeme())){
             classes.put(c.name.getLexeme(), c);
+            c.extendsName = new Token("Object", "Object", -1);
         }
         else
             System.out.println("Class " + c.name + " already defined"); //TODO: throw exception
@@ -47,5 +48,33 @@ public class SymbolTable {
             wellDeclared = wellDeclared && c.isWellDeclared();
         }
         return wellDeclared;
+    }
+
+    public String toString(){
+        StringBuilder toReturn = new StringBuilder();
+
+        for (ConcreteClass c : classes.values()){
+            toReturn.append("Class ").append(c.name.getLexeme()).append("\n");
+            toReturn.append("--Extends ").append(c.extendsName.getLexeme()).append("\n");
+            toReturn.append("--Implements ").append(c.implementsName.getLexeme()).append("\n");
+            toReturn.append("--Static ").append(c.isStatic.getLexeme()).append("\n");
+            toReturn.append("--Attributes:\n");
+            /*
+            for (ConcreteAttribute a : c.attributes.values()){
+                toReturn.append("----").append(a.name.getLexeme()).append(" : ").append(a.type.getLexeme()).append("\n");
+            }
+            toReturn.append("--Methods:\n");
+            for (ConcreteMethod m : c.methods.values()){
+                toReturn.append("----").append(m.name.getLexeme()).append(" : ").append(m.type.getLexeme()).append("\n");
+                toReturn.append("------Static ").append(m.isStatic.getLexeme()).append("\n");
+                toReturn.append("------Parameters:\n");
+                for (ConcreteAttribute p : m.parameters.values()){
+                    toReturn.append("--------").append(p.name.getLexeme()).append(" : ").append(p.type.getLexeme()).append("\n");
+                }
+            }
+            */
+        }
+
+        return toReturn.toString();
     }
 }

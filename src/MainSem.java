@@ -6,7 +6,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 class MainSem {
-    public static void main(String[] args) {
+    public static void main(String[] args2) {
+        String[] args = {"resources/sinErrores/r_syn_assignment.java"};
         long actual = System.currentTimeMillis();
         boolean verbose = false;
         if (args.length == 0){
@@ -27,10 +28,10 @@ class MainSem {
                 }
                 try {
                     syntaxAnalyzer.analyze();
+                    System.out.println(syntaxAnalyzer.getST());
                 }catch (Exception e){
                     errorsCollection.add(e);
                 }
-
             } catch (IOException e) {
                 System.out.println("Error al abrir o leer el archivo.");
             }
