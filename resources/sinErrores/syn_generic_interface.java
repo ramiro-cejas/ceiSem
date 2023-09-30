@@ -1,4 +1,0 @@
-///[SinErrores]
-interface Interface<E> {
-
-}

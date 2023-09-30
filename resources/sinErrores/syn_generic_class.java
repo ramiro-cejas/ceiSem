@@ -1,4 +1,0 @@
-///[SinErrores]
-class Tree<E> {
-
-}

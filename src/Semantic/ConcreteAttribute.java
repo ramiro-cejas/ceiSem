@@ -25,8 +25,4 @@ public class ConcreteAttribute {
     public Token isStatic() {
         return isStatic;
     }
-
-    public boolean isWellDeclared() {
-        return !name.getLexeme().isEmpty() && !type.getLexeme().isEmpty();
-    }
 }

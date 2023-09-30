@@ -3,22 +3,28 @@ package Syntax;
 import Lexical.LexicalAnalyzer;
 import Lexical.LexicalException;
 import Lexical.Token;
-import Semantic.ConcreteClass;
-import Semantic.SymbolTable;
+import Semantic.*;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 public class SyntaxAnalyzer {
     private LexicalAnalyzer lexicalAnalyzer;
     private Token tokenActual;
     private boolean verbose = false;
-    private SymbolTable symbolTable = new SymbolTable();
+    private SymbolTable symbolTable;
+    private Token currentMemberType, currentMemberStatic;
+    private ArrayList<Token> currentMemberId;
 
     public SyntaxAnalyzer(LexicalAnalyzer lexicalAnalyzer) {
+
         this.lexicalAnalyzer = lexicalAnalyzer;
+        this.currentMemberId = new ArrayList<Token>();
     }
 
-    public void analyze() throws LexicalException, SyntaxException, IOException {
+    public void analyze() throws LexicalException, SyntaxException, IOException, SemanticException {
+        symbolTable = new SymbolTable();
         tokenActual = lexicalAnalyzer.getNextToken();
         inicial();
     }
@@ -34,12 +40,13 @@ public class SyntaxAnalyzer {
         }
     }
 
-    private void inicial() throws LexicalException, SyntaxException, IOException {
+    private void inicial() throws LexicalException, SyntaxException, IOException, SemanticException {
         listaClases();
+        symbolTable.check();
         match("EOF");
     }
 
-    private void listaClases() throws SyntaxException, LexicalException, IOException {
+    private void listaClases() throws SyntaxException, LexicalException, IOException, SemanticException {
         print("Entre en listaClases");
         if (tokenActual.getName().equals("keyword_class") || tokenActual.getName().equals("keyword_interface")){
             clase();
@@ -49,7 +56,7 @@ public class SyntaxAnalyzer {
         }
     }
 
-    private void clase() throws SyntaxException, LexicalException, IOException {
+    private void clase() throws SyntaxException, LexicalException, IOException, SemanticException {
         print("Entre en clase");
         if (tokenActual.getName().equals("keyword_class")){
             claseConcreta();
@@ -61,13 +68,13 @@ public class SyntaxAnalyzer {
         }
     }
 
-    private void claseConcreta() throws LexicalException, SyntaxException, IOException {
+    private void claseConcreta() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en claseConcreta");
         match("keyword_class");
         Token idClass = tokenActual;
         match("idClass");
         genericoConID();
-        symbolTable.currentClass = new ConcreteClass(idClass);
+        symbolTable.currentClass = new ConcreteClass(idClass, symbolTable);
         herenciaOpcional();
         match("punctuator_{");
         listaMiembros();
@@ -75,18 +82,18 @@ public class SyntaxAnalyzer {
         symbolTable.addClass(symbolTable.currentClass);
     }
 
-    private void interfaceConcreta() throws LexicalException, SyntaxException, IOException {
+    private void interfaceConcreta() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en interfaceConcreta");
         match("keyword_interface");
         Token idClass = tokenActual;
         match("idClass");
         genericoConID();
-        symbolTable.currentClass = new ConcreteClass(idClass);
+        symbolTable.currentClass = new ConcreteClass(idClass, symbolTable);
         extiendeOpcional();
         match("punctuator_{");
         listaEncabezados();
         match("punctuator_}");
-        symbolTable.addClass(symbolTable.currentClass);
+        symbolTable.addInterface(symbolTable.currentClass);
     }
 
     private void herenciaOpcional() throws LexicalException, SyntaxException, IOException {
@@ -138,10 +145,11 @@ public class SyntaxAnalyzer {
             symbolTable.currentClass.setExtendsName(idClass);
         } else {
             //Epsilon
+            symbolTable.currentClass.setExtendsName(new Token("$", "$", -1));
         }
     }
 
-    private void listaMiembros() throws LexicalException, SyntaxException, IOException {
+    private void listaMiembros() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en listaMiembros");
         if (tokenActual.getName().equals("keyword_static") || tokenActual.getName().equals("keyword_boolean") || tokenActual.getName().equals("keyword_char") || tokenActual.getName().equals("keyword_int") || tokenActual.getName().equals("keyword_float") || tokenActual.getName().equals("idClass") || tokenActual.getName().equals("keyword_void") || tokenActual.getName().equals("keyword_public")){
             miembro();
@@ -151,7 +159,7 @@ public class SyntaxAnalyzer {
         }
     }
 
-    private void listaEncabezados() throws LexicalException, SyntaxException, IOException {
+    private void listaEncabezados() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en listaEncabezados");
         if (tokenActual.getName().equals("keyword_static") || tokenActual.getName().equals("keyword_boolean") || tokenActual.getName().equals("keyword_char") || tokenActual.getName().equals("keyword_int") || tokenActual.getName().equals("keyword_float") || tokenActual.getName().equals("idClass") || tokenActual.getName().equals("keyword_void")){
             encabezadoMetodo();
@@ -161,14 +169,14 @@ public class SyntaxAnalyzer {
         }
     }
 
-    private void miembro() throws LexicalException, SyntaxException, IOException {
+    private void miembro() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en miembro");
+        currentMemberId.clear();
+        currentMemberType = null;
+        currentMemberStatic = null;
         if (tokenActual.getName().equals("keyword_static") || tokenActual.getName().equals("keyword_boolean") || tokenActual.getName().equals("keyword_char") || tokenActual.getName().equals("keyword_int") || tokenActual.getName().equals("keyword_float") || tokenActual.getName().equals("idClass") || tokenActual.getName().equals("keyword_void")){
-            Token[] attributeParamsMax3 = parte1Miembro();
-            Token isStatic = attributeParamsMax3[0];
-            Token type = attributeParamsMax3[1];
-            Token idMetVar = attributeParamsMax3[2];
-            metodoOAtributo(isStatic,type,idMetVar);
+            parte1Miembro();
+            metodoOAtributo();
         } else if (tokenActual.getName().equals("keyword_public")){
             constructor();
         } else {
@@ -177,15 +185,21 @@ public class SyntaxAnalyzer {
         }
     }
 
-    private void metodoOAtributo(Token isStatic, Token type, Token idMetVar) throws LexicalException, SyntaxException, IOException {
+    private void metodoOAtributo() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en metodoOAtributo");
         if (tokenActual.getName().equals("punctuator_;") || tokenActual.getName().equals("assignment_=") || tokenActual.getName().equals("punctuator_,")){
             posiblesExtrasAtributos();
             asignacionOpcionalDeExpresion();
             match("punctuator_;");
-            //TODO: insertar en la tabla de simbolos
+            for (Token id : currentMemberId){
+                symbolTable.currentClass.addAttribute(new ConcreteAttribute(id, currentMemberType, currentMemberStatic));
+            }
+            currentMemberId.clear();
         } else if (tokenActual.getName().equals("punctuator_(")){
+            ConcreteMethod method = new ConcreteMethod(currentMemberId.get(0), currentMemberType, currentMemberStatic, symbolTable);
+            symbolTable.currentClass.currentMethod = method;
             argsFormales();
+            symbolTable.currentClass.addMethod(method);
             bloque();
         } else {
             print("Error en metodoOAtributo");
@@ -197,24 +211,26 @@ public class SyntaxAnalyzer {
         print("Entre en posiblesExtrasAtributos");
         if (tokenActual.getName().equals("punctuator_,")){
             match("punctuator_,");
+            Token idMetVar = tokenActual;
             match("idMetVar");
+            currentMemberId.add(idMetVar);
             posiblesExtrasAtributos();
         } else {
             //Epsilon
         }
     }
 
-    private void encabezadoMetodo() throws LexicalException, SyntaxException, IOException {
+    private void encabezadoMetodo() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en encabezadoMetodo");
         parte1Miembro();
+        symbolTable.currentClass.currentMethod = new ConcreteMethod(currentMemberId.get(0), currentMemberType, currentMemberStatic, symbolTable);
         argsFormales();
         match("punctuator_;");
     }
 
-    private Token[] parte1Miembro() throws LexicalException, SyntaxException, IOException {
-        Token[] toReturn = new Token[3];
+    private void parte1Miembro() throws LexicalException, SyntaxException, IOException {
         print("Entre en parte1Miembro");
-        toReturn[0] = estaticoOpcional();
+        currentMemberStatic = estaticoOpcional();
 
         if (tokenActual.getName().equals("operator_<")){
             metodoGenerico();
@@ -222,13 +238,12 @@ public class SyntaxAnalyzer {
             Token type = tipoMiembro();
             Token idMetVar = tokenActual;
             match("idMetVar");
-            toReturn[1] = type;
-            toReturn[2] = idMetVar;
+            currentMemberType = type;
+            currentMemberId.add(idMetVar);
         } else {
             print("Error en parte1Miembro");
             throw new SyntaxException(lexicalAnalyzer.getLine(), "< o un tipo", tokenActual.getLexeme());
         }
-        return new Token[3];
     }
 
     private void metodoGenerico() throws LexicalException, SyntaxException, IOException {
@@ -241,7 +256,7 @@ public class SyntaxAnalyzer {
         match("idMetVar");
     }
 
-    private void constructor() throws LexicalException, SyntaxException, IOException {
+    private void constructor() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en constructor");
         match("keyword_public");
         match("idClass");
@@ -304,26 +319,25 @@ public class SyntaxAnalyzer {
     }
 
     private Token estaticoOpcional() throws LexicalException, SyntaxException, IOException {
-        Token toReturn = null;
+        Token toReturn = new Token("", "-", -1);
         print("Entre en estaticoOpcional");
         if (tokenActual.getName().equals("keyword_static")){
             toReturn = tokenActual;
             match("keyword_static");
         } else {
             //Epsilon
-            toReturn = new Token("", "", -1);
         }
         return toReturn;
     }
 
-    private void argsFormales() throws LexicalException, SyntaxException, IOException {
+    private void argsFormales() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en argsFormales");
         match("punctuator_(");
         listaArgsFormalesOpcional();
         match("punctuator_)");
     }
 
-    private void listaArgsFormalesOpcional() throws LexicalException, SyntaxException, IOException {
+    private void listaArgsFormalesOpcional() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en listaArgsFormalesOpcional");
         if (tokenActual.getName().equals("keyword_boolean") || tokenActual.getName().equals("keyword_char") || tokenActual.getName().equals("keyword_int") || tokenActual.getName().equals("keyword_float") || tokenActual.getName().equals("idClass")){
             argFormal();
@@ -333,7 +347,7 @@ public class SyntaxAnalyzer {
         }
     }
 
-    private void listaArgsFormales() throws LexicalException, SyntaxException, IOException {
+    private void listaArgsFormales() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en listaArgsFormales");
         if (tokenActual.getName().equals("punctuator_,")){
             match("punctuator_,");
@@ -344,10 +358,12 @@ public class SyntaxAnalyzer {
         }
     }
 
-    private void argFormal() throws LexicalException, SyntaxException, IOException {
+    private void argFormal() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en argFormal");
-        tipo();
+        Token type = tipo();
+        Token idMetVar = tokenActual;
         match("idMetVar");
+        symbolTable.currentClass.currentMethod.addParameter(new ConcreteAttribute(idMetVar, type, new Token("", "-", -1)));
     }
 
     private void bloque() throws LexicalException, SyntaxException, IOException {
