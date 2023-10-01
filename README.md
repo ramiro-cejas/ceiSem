@@ -1,9 +1,6 @@
 
 # Compilador MiniJava
 
-
-
-
 ## Versions
 
 This project is developed in several stages:
@@ -17,8 +14,6 @@ This project is developed in several stages:
 ## Documentation
 
 [Semantic Analyzer Documentation (Only declarations)](https://linktodocumentation)
-
-
 
 ## Authors
 
