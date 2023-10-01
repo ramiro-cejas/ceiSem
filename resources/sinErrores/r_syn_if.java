@@ -1,4 +1,7 @@
 ///[SinErrores]
+class Main {
+    static void main(){}
+}
 class CombinacionesIf {
     static void main(String args) {
         var numero = 10;

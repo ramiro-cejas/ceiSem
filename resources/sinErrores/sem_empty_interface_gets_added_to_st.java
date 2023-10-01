@@ -6,4 +6,5 @@ interface I {
 }
 
 class Main {
+    static void main(){}
 }

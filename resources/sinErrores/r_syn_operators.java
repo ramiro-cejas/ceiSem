@@ -1,4 +1,7 @@
 ///[SinErrores]
+class Main {
+    static void main(){}
+}
 class Class {
     // Operador OR Lógico (||)
     boolean expresion1 = true;

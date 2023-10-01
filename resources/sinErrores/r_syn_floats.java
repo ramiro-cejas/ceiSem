@@ -1,4 +1,7 @@
 ///[SinErrores]
+class Main {
+    static void main(){}
+}
 class Class {
     // Ejemplos de valores float
     float f1 = 3.14e0;         // Notación científica

@@ -1,4 +1,7 @@
 ///[SinErrores]
+class Main {
+    static void main(){}
+}
 class Class {
     static int y, z = 10; // y y z son atributos estáticos
     static int x = 5;  // x y y son atributos estáticos

@@ -1,4 +1,8 @@
 ///[SinErrores]
+
+class Main {
+    static void main(){}
+}
 class EjemplosWhile {
     static void main(String args) {
         var contador = 0;
