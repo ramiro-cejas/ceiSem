@@ -1,2 +1,2 @@
-///[Error:|2]
+///[Error:main|-1]
 class A {}

@@ -2,6 +2,7 @@ package Semantic;
 
 import Lexical.Token;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ConcreteClass{
@@ -12,7 +13,7 @@ public class ConcreteClass{
     HashMap<String, ConcreteAttribute> attributes;
     public ConcreteMethod currentMethod;
     SymbolTable symbolTable;
-    private ConcreteMethod constructor;
+    public ConcreteMethod constructor;
     private boolean consolidated = false;
 
     public ConcreteClass(Token token, SymbolTable symbolTable) {
@@ -53,9 +54,17 @@ public class ConcreteClass{
     }
 
     public void check() throws SemanticException {
+
+        if (extendsName.getLexeme() != "$" && !symbolTable.classes.containsKey(extendsName.getLexeme()) && !symbolTable.interfaces.containsKey(extendsName.getLexeme()))
+            throw new SemanticException(extendsName,"Class extended " + extendsName.getLexeme() + " not defined in line "+ extendsName.getRow());
+
+        if (implementsName.getLexeme() != "-" && !symbolTable.interfaces.containsKey(implementsName.getLexeme()))
+            throw new SemanticException(implementsName,"Interface implemented " + implementsName.getLexeme() + " not defined in line "+ implementsName.getRow());
+
         for (ConcreteMethod m : methods.values()){
+
             if (m.type.getName().equals("idClass")) {
-                if (!symbolTable.classes.containsKey(m.type.getLexeme()) || !symbolTable.interfaces.containsKey(m.type.getLexeme()))
+                if (!symbolTable.classes.containsKey(m.type.getLexeme()) && !symbolTable.interfaces.containsKey(m.type.getLexeme()))
                     throw new SemanticException(m.type,"Class or interface " + m.type.getLexeme() + " not defined in line "+ m.type.getRow());
             }
             m.check();
@@ -63,27 +72,63 @@ public class ConcreteClass{
 
         for (ConcreteAttribute a : attributes.values()){
             if (a.type.getName().equals("idClass")) {
-                if (!symbolTable.classes.containsKey(a.type.getLexeme()) || !symbolTable.interfaces.containsKey(a.type.getLexeme()))
+                if (!symbolTable.classes.containsKey(a.type.getLexeme()) && !symbolTable.interfaces.containsKey(a.type.getLexeme()))
                     throw new SemanticException(a.type,"Class or interface " + a.type.getLexeme() + " not defined in line "+ a.type.getRow());
             }
         }
     }
 
-    public void consolidate() throws SemanticException {
+    public void consolidate(ArrayList parentsList) throws SemanticException {
+        //if im in the list, there is a cycle then throw exception
+        if (parentsList.contains(name.getLexeme()))
+            throw new SemanticException(name,"Cycle detected in class " + name.getLexeme() + " in line "+ name.getRow());
         if (!consolidated){
             if (extendsName.getLexeme().equals("$")){}
             else if (extendsName.getLexeme().equals("Object")) inherit(extendsName.getLexeme());
             else {
                 ConcreteClass parent = symbolTable.classes.get(extendsName.getLexeme());
-                parent.consolidate();
+                if (parent == null)
+                    parent = symbolTable.interfaces.get(extendsName.getLexeme());
+                parentsList.add(name.getLexeme());
+                parent.consolidate(parentsList);
                 inherit(extendsName.getLexeme());
             }
             consolidated = true;
+        }
+        if (constructor == null){
+            constructor = new ConcreteMethod(name, name, new Token("", "-", -1), symbolTable);
+        }
+        checkCorrectInheritance();
+    }
+
+    private void checkCorrectInheritance() throws SemanticException {
+        //check if all methods from the interfaces are implemented
+        if (!implementsName.getLexeme().equals("-")){
+            ConcreteClass parent = symbolTable.interfaces.get(implementsName.getLexeme());
+            for (ConcreteMethod m : parent.methods.values()){
+                if (!methods.containsKey(m.name.getLexeme()))
+                    throw new SemanticException(m.name,"Method " + m.name.getLexeme() + " from interface " + implementsName.getLexeme() + " not implemented in line "+ m.name.getRow());
+                else{
+                    //check if method is overriden, if the signature is the same, same type of return and same type and order of parameters then its ok
+                    ConcreteMethod current = methods.get(m.name.getLexeme());
+                    if (!current.type.getLexeme().equals(m.type.getLexeme()))
+                        throw new SemanticException(current.name,"Method " + m.name.getLexeme() + " from interface " + implementsName.getLexeme() + " not implemented in line "+ m.name.getRow());
+                    if (current.parameters.size() != m.parameters.size())
+                        throw new SemanticException(current.name,"Method " + m.name.getLexeme() + " from interface " + implementsName.getLexeme() + " not implemented in line "+ m.name.getRow());
+                    //check if parameters are the same with the same order using parametersInOrder
+                    for (int i = 0; i < current.parametersInOrder.size(); i++){
+                        if (!current.parametersInOrder.get(i).type.getLexeme().equals(m.parametersInOrder.get(i).type.getLexeme()))
+                            throw new SemanticException(current.name,"Method " + m.name.getLexeme() + " from interface " + implementsName.getLexeme() + " not implemented in line "+ m.name.getRow());
+                    }
+                }
+            }
         }
     }
 
     private void inherit(String lexeme) throws SemanticException {
         ConcreteClass parent = symbolTable.classes.get(lexeme);
+        if (parent == null)
+            parent = symbolTable.interfaces.get(lexeme);
         for (ConcreteAttribute a : parent.attributes.values()){
             if (!attributes.containsKey(a.name.getLexeme()))
                 attributes.put(a.name.getLexeme(), a);
@@ -97,22 +142,16 @@ public class ConcreteClass{
             if (!methods.containsKey(m.name.getLexeme()))
                 methods.put(m.name.getLexeme(), m);
             else{
-                //check if method is overriden
+                //check if method is overriden, if the signature is the same, same type of return and same type and order of parameters then its ok
                 ConcreteMethod current = methods.get(m.name.getLexeme());
+                if (!current.type.getLexeme().equals(m.type.getLexeme()))
+                    throw new SemanticException(current.name,"Method " + m.name.getLexeme() + " already defined in the parent class "+ parent.name.getLexeme() + " in line "+ m.name.getRow());
                 if (current.parameters.size() != m.parameters.size())
                     throw new SemanticException(current.name,"Method " + m.name.getLexeme() + " already defined in the parent class "+ parent.name.getLexeme() + " in line "+ m.name.getRow());
-                else {
-                    for (ConcreteAttribute p : current.parameters.values()){
-                        if (!m.parameters.containsKey(p.name.getLexeme())){
-                            Token currentP = m.parameters.get(p.name.getLexeme()).name;
-                            throw new SemanticException(current.name,"Method " + m.name.getLexeme() + " already defined in the parent class "+ parent.name.getLexeme() + " in line "+ m.name.getRow());
-                        }
-                        else {
-                            ConcreteAttribute currentP = m.parameters.get(p.name.getLexeme());
-                            if (!currentP.type.getLexeme().equals(p.type.getLexeme()))
-                                throw new SemanticException(current.name,"Method " + m.name.getLexeme() + " already defined in the parent class "+ parent.name.getLexeme() + " in line "+ m.name.getRow());
-                        }
-                    }
+                //check if parameters are the same with the same order using parametersInOrder
+                for (int i = 0; i < current.parametersInOrder.size(); i++){
+                    if (!current.parametersInOrder.get(i).type.getLexeme().equals(m.parametersInOrder.get(i).type.getLexeme()))
+                        throw new SemanticException(current.name,"Method " + m.name.getLexeme() + " already defined in the parent class "+ parent.name.getLexeme() + " in line "+ m.name.getRow());
                 }
             }
         }

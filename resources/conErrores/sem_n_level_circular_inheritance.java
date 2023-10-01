@@ -6,5 +6,5 @@ class D extends E {}
 class E extends A {}
 
 class Main {
-    public static void main() {}
+    static void main() {}
 }

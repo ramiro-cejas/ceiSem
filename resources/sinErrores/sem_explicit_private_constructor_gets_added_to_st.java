@@ -1,6 +1,6 @@
 ///[SinErrores]
 class C {
-    C() {
+    public C() {
 
     }
 }

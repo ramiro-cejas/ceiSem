@@ -1,4 +1,4 @@
-///[Error:x|3]
+///[Error:Tree|3]
 class C {
     static Tree x() {}
 }

@@ -2,6 +2,7 @@ package Semantic;
 
 import Lexical.Token;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -78,7 +79,7 @@ public class SymbolTable {
     }
 
     public void addClass(ConcreteClass c) throws SemanticException {
-        if (!classes.containsKey(c.name.getLexeme())){
+        if (!classes.containsKey(c.name.getLexeme()) && !interfaces.containsKey(c.name.getLexeme())){
             classes.put(c.name.getLexeme(), c);
         }
         else
@@ -86,7 +87,7 @@ public class SymbolTable {
     }
 
     public void addInterface(ConcreteClass c) throws SemanticException {
-        if (!interfaces.containsKey(c.name.getLexeme())){
+        if (!interfaces.containsKey(c.name.getLexeme()) && !classes.containsKey(c.name.getLexeme())){
             interfaces.put(c.name.getLexeme(), c);
         }
         else
@@ -94,10 +95,37 @@ public class SymbolTable {
     }
 
     public void check() throws SemanticException {
+        for (ConcreteClass c : interfaces.values()){
+            c.check();
+            c.consolidate(new ArrayList());
+        }
         for (ConcreteClass c : classes.values()){
             c.check();
-            c.consolidate();
+            c.consolidate(new ArrayList());
         }
+        checkAtLeastOneMain();
+        checkNoneInterfaceHasDebugPrint();
+    }
+
+    private void checkNoneInterfaceHasDebugPrint() throws SemanticException {
+        for (ConcreteClass c : interfaces.values()){
+            if (c.methods.containsKey("debugPrint"))
+                throw new SemanticException(c.methods.get("debugPrint").name, "Interface " + c.name.getLexeme() + " cannot have debugPrint method");
+        }
+    }
+
+    private void checkAtLeastOneMain() throws SemanticException {
+        boolean hasMain = false;
+        for (ConcreteClass c : classes.values()){
+            for (ConcreteMethod m : c.methods.values()){
+                if (m.name.getLexeme().equals("main") && m.type.getLexeme().equals("void") && m.parameters.size() == 0 && m.isStatic.getLexeme().equals("static")){
+                    hasMain = true;
+                    break;
+                }
+            }
+        }
+        if (!hasMain)
+            throw new SemanticException(new Token("main", "main", -1), "No main method found");
     }
 
     public String toString(){
@@ -161,6 +189,21 @@ public class SymbolTable {
                 toReturn.append("├─ Extends: ").append(c.extendsName.getLexeme()).append("\n");
             if (!c.implementsName.getLexeme().equals("-"))
                 toReturn.append("├─ Implements: ").append(c.implementsName.getLexeme()).append("\n");
+            toReturn.append("├─ Constructor:\n");
+            toReturn.append("│   └─ ").append(c.constructor.name.getLexeme()).append(" : ").append(c.constructor.type.getLexeme()).append("\n");
+
+            if (c.constructor.parameters.isEmpty())
+                toReturn.append("│       └─ No parameters\n");
+            else{
+                toReturn.append("│       └─ Parameters:\n");
+                for (ConcreteAttribute p : c.constructor.parameters.values()){
+                    if (c.constructor.parameters.values().toArray()[c.constructor.parameters.size()-1] == p)
+                        toReturn.append("│           └─ ").append(p.name.getLexeme()).append(" : ").append(p.type.getLexeme()).append("\n");
+                    else
+                        toReturn.append("│           ├─ ").append(p.name.getLexeme()).append(" : ").append(p.type.getLexeme()).append("\n");
+                }
+            }
+
             if (c.attributes.isEmpty())
                 toReturn.append("├─ No attributes\n");
             else

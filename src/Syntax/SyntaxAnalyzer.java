@@ -222,10 +222,12 @@ public class SyntaxAnalyzer {
 
     private void encabezadoMetodo() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en encabezadoMetodo");
+        currentMemberId.clear();
         parte1Miembro();
         symbolTable.currentClass.currentMethod = new ConcreteMethod(currentMemberId.get(0), currentMemberType, currentMemberStatic, symbolTable);
         argsFormales();
         match("punctuator_;");
+        symbolTable.currentClass.addMethod(symbolTable.currentClass.currentMethod);
     }
 
     private void parte1Miembro() throws LexicalException, SyntaxException, IOException {
@@ -259,10 +261,13 @@ public class SyntaxAnalyzer {
     private void constructor() throws LexicalException, SyntaxException, IOException, SemanticException {
         print("Entre en constructor");
         match("keyword_public");
+        Token idClass = tokenActual;
         match("idClass");
+        symbolTable.currentClass.currentMethod = new ConcreteMethod(idClass, idClass, new Token("", "-", -1), symbolTable);
         genericoOpcional();
         argsFormales();
         bloque();
+        symbolTable.currentClass.addConstructor(symbolTable.currentClass.currentMethod);
     }
 
     private Token tipoMiembro() throws SyntaxException, LexicalException, IOException {

@@ -32,6 +32,7 @@ class MainSem {
                     System.out.println(syntaxAnalyzer.getST());
                 }catch (Exception e){
                     errorsCollection.add(e);
+                    e.printStackTrace();
                 }
             } catch (IOException e) {
                 System.out.println("Error al abrir o leer el archivo.");

@@ -1,4 +1,4 @@
-///[Error:t|3]
+///[Error:Tree|3]
 class C {
     void m1(Tree t) {}
 }

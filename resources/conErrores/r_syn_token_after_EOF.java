@@ -1,3 +1,6 @@
-///[Error:a|3]
-class Class {}
+///[Error:a|6]
+class Class {
+    static void main() {
+    }
+}
 a

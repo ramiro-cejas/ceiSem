@@ -1,4 +1,4 @@
-///[Error:debugPrint|-1]
+///[Error:debugPrint|3]
 interface Interface {
     void debugPrint(int i);
 }
