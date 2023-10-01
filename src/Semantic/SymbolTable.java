@@ -104,13 +104,17 @@ public class SymbolTable {
             c.consolidate(new ArrayList());
         }
         checkAtLeastOneMain();
-        checkNoneInterfaceHasDebugPrint();
+        checkInterfaces();
     }
 
-    private void checkNoneInterfaceHasDebugPrint() throws SemanticException {
+    private void checkInterfaces() throws SemanticException {
         for (ConcreteClass c : interfaces.values()){
             if (c.methods.containsKey("debugPrint"))
                 throw new SemanticException(c.methods.get("debugPrint").name, "Interface " + c.name.getLexeme() + " cannot have debugPrint method");
+            for (ConcreteMethod m : c.methods.values()){
+                if (m.isStatic.getLexeme().equals("static"))
+                    throw new SemanticException(m.name, "Interface " + c.name.getLexeme() + " cannot have static methods");
+            }
         }
     }
 

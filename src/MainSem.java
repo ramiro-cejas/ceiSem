@@ -7,7 +7,6 @@ import java.util.ArrayList;
 
 class MainSem {
     public static void main(String[] args) {
-        //String[] args = {"resources/sinErrores/r_syn_assignment.java"};
         long actual = System.currentTimeMillis();
         boolean verbose = false;
         if (args.length == 0){
@@ -28,8 +27,10 @@ class MainSem {
                 }
                 try {
                     syntaxAnalyzer.analyze();
-                    if (verbose)
+                    if (verbose){
+                        System.out.println("\n---------------------------------------------------------\n\n[Tabla de simbolos]");
                         System.out.println(syntaxAnalyzer.getST());
+                    }
                 }catch (Exception e){
                     errorsCollection.add(e);
                 }

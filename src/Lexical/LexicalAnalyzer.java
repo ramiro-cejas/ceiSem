@@ -58,6 +58,15 @@ public class LexicalAnalyzer {
                 isZero = true;
             }
         }
+        if (tokenLexeme.contains(".")){
+            String[] splitted = tokenLexeme.split("\\.");
+            if (Double.parseDouble(splitted[0]) == 0){
+                isZero = true;
+            }
+            if (Double.parseDouble(splitted[1]) == 0){
+                isZero = true;
+            }
+        }
 
         try {
             double num = Double.parseDouble(tokenLexeme);
