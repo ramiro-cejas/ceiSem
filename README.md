@@ -13,7 +13,7 @@ This project is developed in several stages:
 
 ## Documentation
 
-[Semantic Analyzer Documentation (Only declarations)](https://linktodocumentation)
+[Semantic Analyzer Documentation (Only declarations)](https://github.com/ramiro-cejas/ceiSem/blob/main/Informe%20CeI%20Analizador%20Sem%C3%A1ntico.pdf)
 
 ## Authors
 
