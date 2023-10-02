@@ -13,6 +13,7 @@ public class ConcreteMethod {
     HashMap<String, ConcreteAttribute> parameters;
     SymbolTable symbolTable;
     public ArrayList<ConcreteAttribute> parametersInOrder;
+    private boolean alreadyChecked = false;
 
     public ConcreteMethod(Token name, Token type, Token isStatic, SymbolTable symbolTable) {
         this.name = name;
@@ -23,55 +24,31 @@ public class ConcreteMethod {
         parametersInOrder = new ArrayList<>();
     }
 
-    public void addParameter(ConcreteAttribute p) throws SemanticException {
+    public void addParameter(ConcreteAttribute p) {
         if (!parameters.containsKey(p.name.getLexeme())){
             if (p.type.getLexeme().equals("void")){
-                throw new SemanticException(p.name,"Parameter " + p.name.getLexeme() + " cannot be void in line "+ p.name.getRow());
+                symbolTable.semExceptionHandler.show(new SemanticException(p.name,"Parameter " + p.name.getLexeme() + " cannot be void in line "+ p.name.getRow()));
             }else {
                 parametersInOrder.add(p);
                 parameters.put(p.name.getLexeme(), p);
             }
         }
         else
-            throw new SemanticException(p.name,"Parameter " + p.name.getLexeme() + " already defined in line "+ p.name.getRow());
+            symbolTable.semExceptionHandler.show(new SemanticException(p.name,"Parameter " + p.name.getLexeme() + " already defined in line "+ p.name.getRow()));
     }
 
-    public void check() throws SemanticException {
-        for (ConcreteAttribute p : parameters.values()){
-            if (p.type.getName().equals("idClass")) {
-                if (!symbolTable.classes.containsKey(p.type.getLexeme()) && !symbolTable.interfaces.containsKey(p.type.getLexeme()))
-                    throw new SemanticException(p.type,"Class or interface " + p.type.getLexeme() + " not defined in line "+ p.type.getRow());
-            } else if (p.type.getLexeme().equals("void")){
-                throw new SemanticException(p.name,"Parameter " + p.name.getLexeme() + " cannot be void in line "+ p.name.getRow());
+    public void check() {
+        if (!alreadyChecked){
+            for (ConcreteAttribute p : parameters.values()){
+                if (p.type.getName().equals("idClass")) {
+                    if (!symbolTable.classes.containsKey(p.type.getLexeme()) && !symbolTable.interfaces.containsKey(p.type.getLexeme()))
+                        symbolTable.semExceptionHandler.show(new SemanticException(p.type,"Class or interface " + p.type.getLexeme() + " not defined in line "+ p.type.getRow()));
+                } else if (p.type.getLexeme().equals("void")){
+                    symbolTable.semExceptionHandler.show(new SemanticException(p.name,"Parameter " + p.name.getLexeme() + " cannot be void in line "+ p.name.getRow()));
+                }
             }
+            alreadyChecked = true;
         }
     }
 
-    public void setName(Token name) {
-        this.name = name;
-    }
-
-    public void setType(Token type) {
-        this.type = type;
-    }
-
-    public void setIsStatic(Token isStatic) {
-        this.isStatic = isStatic;
-    }
-
-    public Token getName() {
-        return name;
-    }
-
-    public Token getType() {
-        return type;
-    }
-
-    public Token isStatic() {
-        return isStatic;
-    }
-
-    public boolean isWellDeclared() {
-        return !name.getLexeme().equals("") && !type.getLexeme().equals("");
-    }
 }

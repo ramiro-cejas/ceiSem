@@ -31,6 +31,7 @@ class MainSem {
                         System.out.println("\n---------------------------------------------------------\n\n[Tabla de simbolos]");
                         System.out.println(syntaxAnalyzer.getST());
                     }
+                    errorsCollection.addAll(syntaxAnalyzer.getErrors());
                 }catch (Exception e){
                     errorsCollection.add(e);
                 }

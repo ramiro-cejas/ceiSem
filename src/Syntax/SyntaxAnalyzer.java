@@ -8,6 +8,7 @@ import Semantic.*;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class SyntaxAnalyzer {
     private LexicalAnalyzer lexicalAnalyzer;
@@ -780,5 +781,9 @@ public class SyntaxAnalyzer {
 
     public String getST() {
         return symbolTable.toString();
+    }
+
+    public Collection<? extends Exception> getErrors() {
+        return symbolTable.getErrors();
     }
 }

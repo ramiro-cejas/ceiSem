@@ -3,6 +3,7 @@ package Semantic;
 import Lexical.Token;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -10,12 +11,15 @@ public class SymbolTable {
     public HashMap<String, ConcreteClass> classes;
     public HashMap<String, ConcreteClass> interfaces;
     public ConcreteClass currentClass;
+    ArrayList<SemanticException> errors;
+    public SemExceptionHandler semExceptionHandler = new SemExceptionHandler(this);
 
     public SymbolTable() throws SemanticException {
         classes = new HashMap<>();
         interfaces = new HashMap<>();
         currentClass = null;
         addDefaultsClasses();
+        errors = new ArrayList<>();
     }
 
     private void addDefaultsClasses() throws SemanticException {
@@ -82,16 +86,23 @@ public class SymbolTable {
         if (!classes.containsKey(c.name.getLexeme()) && !interfaces.containsKey(c.name.getLexeme())){
             classes.put(c.name.getLexeme(), c);
         }
-        else
-            throw new SemanticException(c.name,"Class " + c.name.getLexeme() + " already defined in line "+ c.name.getRow());
+        else {
+            classes.remove(c.name.getLexeme());
+            interfaces.remove(c.name.getLexeme());
+            semExceptionHandler.show(new SemanticException(c.name, "Class " + c.name.getLexeme() + " already defined in line " + c.name.getRow()));
+        }
     }
 
     public void addInterface(ConcreteClass c) throws SemanticException {
         if (!interfaces.containsKey(c.name.getLexeme()) && !classes.containsKey(c.name.getLexeme())){
             interfaces.put(c.name.getLexeme(), c);
         }
-        else
-            throw new SemanticException(c.name,"Interface " + c.name.getLexeme() + " already defined in line "+ c.name.getRow());
+        else{
+            classes.remove(c.name.getLexeme());
+            interfaces.remove(c.name.getLexeme());
+
+            semExceptionHandler.show(new SemanticException(c.name,"Interface " + c.name.getLexeme() + " already defined in line "+ c.name.getRow()));
+        }
     }
 
     public void check() throws SemanticException {
@@ -110,10 +121,10 @@ public class SymbolTable {
     private void checkInterfaces() throws SemanticException {
         for (ConcreteClass c : interfaces.values()){
             if (c.methods.containsKey("debugPrint"))
-                throw new SemanticException(c.methods.get("debugPrint").name, "Interface " + c.name.getLexeme() + " cannot have debugPrint method");
+                semExceptionHandler.show(new SemanticException(c.methods.get("debugPrint").name, "Interface " + c.name.getLexeme() + " cannot have debugPrint method"));
             for (ConcreteMethod m : c.methods.values()){
                 if (m.isStatic.getLexeme().equals("static"))
-                    throw new SemanticException(m.name, "Interface " + c.name.getLexeme() + " cannot have static methods");
+                    semExceptionHandler.show(new SemanticException(m.name, "Interface " + c.name.getLexeme() + " cannot have static methods"));
             }
         }
     }
@@ -129,7 +140,7 @@ public class SymbolTable {
             }
         }
         if (!hasMain)
-            throw new SemanticException(new Token("main", "main", -1), "No main method found");
+            semExceptionHandler.show(new SemanticException(new Token("main", "main", -1), "No main method found"));
     }
 
     public String toString(){
@@ -139,17 +150,6 @@ public class SymbolTable {
             toReturn.append("Interface: ").append(c.name.getLexeme()).append("\n");
             if (!c.extendsName.getLexeme().equals("-"))
                 toReturn.append("├─ Extends: ").append(c.extendsName.getLexeme()).append("\n");
-            if (c.attributes.isEmpty())
-                toReturn.append("├─ No attributes\n");
-            else
-                toReturn.append("├─ Attributes:\n");
-
-            for (ConcreteAttribute a : c.attributes.values()){
-                if (c.attributes.values().toArray()[c.attributes.size()-1] == a)
-                    toReturn.append("│   └─ ").append(a.name.getLexeme()).append(" : ").append(a.type.getLexeme()).append("\n");
-                else
-                    toReturn.append("│   ├─ ").append(a.name.getLexeme()).append(" : ").append(a.type.getLexeme()).append("\n");
-            }
 
             if (c.methods.isEmpty())
                 toReturn.append("└─ No methods\n");
@@ -208,6 +208,18 @@ public class SymbolTable {
                 }
             }
 
+            if (c.hiddenAttributes.isEmpty())
+                toReturn.append("├─ No hidden attributes\n");
+            else
+                toReturn.append("├─ Hidden attributes:\n");
+
+            for (ConcreteAttribute a : c.hiddenAttributes.values()){
+                if (c.hiddenAttributes.values().toArray()[c.hiddenAttributes.size()-1] == a)
+                    toReturn.append("│   └─ ").append(a.name.getLexeme()).append(" : ").append(a.type.getLexeme()).append("\n");
+                else
+                    toReturn.append("│   ├─ ").append(a.name.getLexeme()).append(" : ").append(a.type.getLexeme()).append("\n");
+            }
+
             if (c.attributes.isEmpty())
                 toReturn.append("├─ No attributes\n");
             else
@@ -257,5 +269,9 @@ public class SymbolTable {
         }
 
         return toReturn.toString();
+    }
+
+    public Collection<? extends Exception> getErrors() {
+        return errors;
     }
 }
